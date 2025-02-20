@@ -1,0 +1,74 @@
+= KOReader Break Timer
+Jordan Williams <jordan@jwillikers.com>
+:experimental:
+:icons: font
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+:Asciidoctor_: https://asciidoctor.org/[Asciidoctor]
+:just: https://github.com/casey/just[just]
+:KOReader: https://github.com/koreader/koreader[KOReader]
+:KOReader-read-timer-plugin: https://github.com/koreader/koreader/tree/master/plugins/readtimer.koplugin[KOReader read timer plugin]
+:Linux: https://www.linuxfoundation.org/[Linux]
+:Nix: https://nixos.org/[Nix]
+:nix-direnv: https://github.com/nix-community/nix-direnv[nix-direnv]
+:Nushell: https://www.nushell.sh/[Nushell]
+
+A {KOReader} plugin for taking regular breaks.
+
+== Usage
+
+This plugin is based on the built-in {KOReader-read-timer-plugin}.
+It starts automatically, and allows the user to set a break interval and length.
+During the break, a message box overlays the screen.
+There is no way to dismiss the break until the break time has elapsed.
+Follow the instructions here to install the plugin to an instance of KOReader on a Kobo reader.
+
+. Clone this project's repository.
++
+[,sh]
+----
+git clone https://github.com/jwillikers/koreader-break-timer.git
+----
+
+. Change into the project directory.
++
+[,sh]
+----
+cd koreader-break-timer
+----
+
+. Plug in the Kobo reader and mount its filesystem.
+
+. Copy the plugin directory to the KOReader plugins directory.
++
+[,sh]
+----
+cp --recursive breaktimer.koplugin /run/media/$(id --user)/KOBOeReader/.adds/koreader/plugins/
+----
+
+. Now unmount the Kobo reader's filesystem.
+. Reboot the Kobo reader.
+
+== Contributing
+
+Contributions in the form of issues, feedback, and even pull requests are welcome.
+Make sure to adhere to the project's link:CODE_OF_CONDUCT.adoc[Code of Conduct].
+
+== Code of Conduct
+
+Refer to the project's link:CODE_OF_CONDUCT.adoc[Code of Conduct] for details.
+
+== License
+
+This repository is licensed under the link:LICENSE[MIT license].
+
+© 2025 Jordan Williams
+
+== Authors
+
+mailto:{email}[{author}]
