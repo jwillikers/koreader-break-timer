@@ -9,7 +9,6 @@ local datetime = require("datetime")
 local time = require("ui/time")
 local _ = require("gettext")
 local T = require("ffi/util").template
-local Screen = Device.screen
 
 local BreakTimer = WidgetContainer:extend{
     name = "breaktimer",
@@ -36,8 +35,8 @@ function BreakTimer:init()
                 text = tip_text,
                 timeout = self.break_length,
                 dismissable = false,
-                width = Screen:getWidth(),
-                height = Screen:getHeight(),
+                width = 350,
+                height = 750,
         })
     end
 
