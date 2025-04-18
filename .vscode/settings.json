@@ -9,6 +9,7 @@
         "dismissable",
         "ifdef",
         "koplugin",
+        "koreader",
         "Nushell"
     ]
 }

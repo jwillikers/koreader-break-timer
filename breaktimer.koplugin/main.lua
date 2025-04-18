@@ -26,8 +26,7 @@ function BreakTimer:init()
 
     self.break_callback = function()
         logger.dbg("time for scheduled break")
-        self:rescheduleIn(self.break_interval + self.break_length)
-        local tip_text = _("Time for a break")
+        self:unschedule()
 
         -- todo Display the amount of time remaining and update every minute.
         -- todo Go to sleep for the duration of the break?
@@ -38,6 +37,9 @@ function BreakTimer:init()
                 width = 350,
                 height = 750,
         })
+
+        self:rescheduleIn(self.break_interval + self.break_length)
+        local tip_text = _("Time for a break")
     end
 
     self:rescheduleIn(self.break_interval)
@@ -179,6 +181,7 @@ function BreakTimer:unschedule()
 end
 
 function BreakTimer:rescheduleIn(seconds)
+    self:unschedule()
     -- Resolution: time.now() subsecond, os.time() two seconds
     self.next_break = time.now() + time.s(seconds)
     UIManager:scheduleIn(seconds, self.break_callback)

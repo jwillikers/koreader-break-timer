@@ -48,7 +48,8 @@ cd koreader-break-timer
 +
 [,sh]
 ----
-cp --recursive breaktimer.koplugin /run/media/$(id --user)/KOBOeReader/.adds/koreader/plugins/
+mkdir /run/media/$(id --user)/KOBOeReader/.adds/koreader/plugins/breaktimer.koplugin
+cp --recursive breaktimer.koplugin/* /run/media/$(id --user)/KOBOeReader/.adds/koreader/plugins/breaktimer.koplugin/
 ----
 
 . Now unmount the Kobo reader's filesystem.
