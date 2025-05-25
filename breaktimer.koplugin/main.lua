@@ -13,8 +13,8 @@ local T = require("ffi/util").template
 local BreakTimer = WidgetContainer:extend{
     name = "breaktimer",
     next_break = 0,  -- The time until the next break occurs
-    break_interval = 900, -- The length of time between breaks in seconds
-    break_length = 300, -- The length of the break in seconds
+    break_interval = 1140, -- The length of time between breaks in seconds
+    break_length = 240, -- The length of the break in seconds
 }
 
 function BreakTimer:init()
