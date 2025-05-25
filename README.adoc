@@ -54,6 +54,11 @@ cp --recursive breaktimer.koplugin/* /run/media/$(id --name --user)/KOBOeReader/
 
 . Now unmount the Kobo reader's filesystem.
 . Reboot the Kobo reader.
++
+[IMPORTANT]
+====
+Any changes to the plugin seem to require a reboot to take effect.
+====
 
 == Contributing
 

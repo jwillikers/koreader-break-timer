@@ -21,8 +21,23 @@ function BreakTimer:init()
     self.timer_symbol = "\u{23F2}"  -- ⏲ timer symbol
     self.timer_letter = "B"
 
-    self.break_interval = G_reader_settings:readSetting("break_timer_break_interval")
-    self.break_length = G_reader_settings:readSetting("break_timer_break_length")
+    local break_interval_hours = 0
+    local break_interval_minutes = 19
+    local break_interval = G_reader_settings:readSetting("break_timer_break_interval")
+    if break_interval then
+        break_interval_hours = break_interval[1]
+        break_interval_minutes = break_interval[2]
+    end
+    self.break_interval = break_interval_hours * 3600 + break_interval_minutes * 60
+
+    local break_length_hours = 0
+    local break_length_minutes = 4
+    local break_length = G_reader_settings:readSetting("break_timer_break_length")
+    if break_length then
+        break_length_hours = break_length[1]
+        break_length_minutes = break_length[2]
+    end
+    self.break_length = break_length_hours * 3600 + break_length_minutes * 60
 
     self.break_callback = function()
         logger.dbg("time for scheduled break")
@@ -243,18 +258,17 @@ function BreakTimer:addToMainMenu(menu_items)
                 text = _("Set interval"),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local remain_time = {}
-                    local remain_hours, remain_minutes = self:remainingTime()
-                    if not remain_hours and not remain_minutes then
-                        remain_time = G_reader_settings:readSetting("break_timer_remain_time")
-                        if remain_time then
-                            remain_hours = remain_time[1]
-                            remain_minutes = remain_time[2]
-                        end
+                    local break_interval_time = {}
+                    local break_interval_hours = 0
+                    local break_interval_minutes = 19
+                    break_interval_time = G_reader_settings:readSetting("break_timer_break_interval")
+                    if break_interval_time then
+                        break_interval_hours = break_interval_time[1]
+                        break_interval_minutes = break_interval_time[2]
                     end
                     local time_widget = DateTimeWidget:new{
-                        hour = remain_hours or 0,
-                        min = remain_minutes or 0,
+                        hour = break_interval_hours or 0,
+                        min = break_interval_minutes or 19,
                         hour_max = 17,
                         ok_text = _("Set break interval"),
                         title_text =  _("Set break timer interval"),
@@ -272,8 +286,8 @@ function BreakTimer:addToMainMenu(menu_items)
                                              datetime.secondsToClockDuration(user_duration_format, seconds, true)),
                                     timeout = 5,
                                 })
-                                remain_time = {timer_time.hour, timer_time.min}
-                                G_reader_settings:saveSetting("break_timer_remain_time", remain_time)
+                                break_interval_time = {timer_time.hour, timer_time.min}
+                                G_reader_settings:saveSetting("break_timer_break_interval", break_interval_time)
                                 if touchmenu_instance then touchmenu_instance:updateItems() end
                             end
                         end
@@ -287,28 +301,25 @@ function BreakTimer:addToMainMenu(menu_items)
                 text = _("Set break length"),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local remain_time = {}
-                    local remain_hours, remain_minutes = self:remainingTime()
-                    if not remain_hours and not remain_minutes then
-                        remain_time = G_reader_settings:readSetting("break_timer_break_length")
-                        if remain_time then
-                            remain_hours = remain_time[1]
-                            remain_minutes = remain_time[2]
-                        end
+                    local break_length_time = {}
+                    local break_length_hours = 0
+                    local break_length_minutes = 4
+                    break_length_time = G_reader_settings:readSetting("break_timer_break_length")
+                    if break_length_time then
+                        break_length_hours = break_length_time[1]
+                        break_length_minutes = break_length_time[2]
                     end
                     local time_widget = DateTimeWidget:new{
-                        hour = remain_hours or 0,
-                        min = remain_minutes or 0,
+                        hour = break_length_hours or 0,
+                        min = break_length_minutes or 4,
                         hour_max = 17,
                         ok_text = _("Set break length"),
                         title_text =  _("Set break timer break length"),
                         info_text = _("Enter a time in hours and minutes."),
                         callback = function(timer_time)
-                            -- self:unschedule()
                             local seconds = timer_time.hour * 3600 + timer_time.min * 60
                             if seconds > 0 then
                                 self.break_length = seconds
-                                -- self:rescheduleIn(seconds)
                                 local user_duration_format = G_reader_settings:readSetting("duration_format")
                                 UIManager:show(InfoMessage:new{
                                     -- @translators This is a duration
@@ -316,8 +327,8 @@ function BreakTimer:addToMainMenu(menu_items)
                                              datetime.secondsToClockDuration(user_duration_format, seconds, true)),
                                     timeout = 5,
                                 })
-                                remain_time = {timer_time.hour, timer_time.min}
-                                G_reader_settings:saveSetting("break_timer_break_length", remain_time)
+                                break_length_time = {timer_time.hour, timer_time.min}
+                                G_reader_settings:saveSetting("break_timer_break_length", break_length_time)
                                 if touchmenu_instance then touchmenu_instance:updateItems() end
                             end
                         end
