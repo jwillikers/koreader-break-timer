@@ -26,6 +26,7 @@ This plugin is based on the built-in {KOReader-read-timer-plugin}.
 It starts automatically, and allows the user to set a break interval and length.
 During the break, a message box overlays the screen.
 There is no way to dismiss the break until the break time has elapsed.
+I should add an option to allow dismissing the break timer or not.
 Follow the instructions here to install the plugin to an instance of KOReader on a Kobo reader.
 
 . Clone this project's repository.

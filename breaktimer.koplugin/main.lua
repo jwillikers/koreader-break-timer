@@ -12,10 +12,95 @@ local T = require("ffi/util").template
 
 local BreakTimer = WidgetContainer:extend{
     name = "breaktimer",
-    next_break = 0,  -- The time until the next break occurs
+    next_event = 0,  -- The time until the next break starts or the current break ends
     break_interval = 1140, -- The length of time between breaks in seconds
     break_length = 240, -- The length of the break in seconds
+    idle_start = 0, -- The time when suspend (idle) started
+    is_break = false, -- Whether or not the break is active
+    -- break_start = 0, -- When a break is actively occurring, the time when it started
+    -- break_end = 0, -- When a break is actively occurring, the time when it ends
 }
+
+function BreakTimer:startBreak()
+    if not self.is_break then
+        logger.dbg("start scheduled break")
+        self:unschedule()
+        self.is_break = true
+        -- self.break_start = time.now()
+        -- self.break_end = self.break_start + time.s(self.break_length)
+        self.break_dialog = InfoMessage:new{
+            text = _("Time for a break"),
+            -- timeout = self.break_length,
+            dismissable = false,
+            width = 800,
+            height = 1200,
+        }
+        UIManager:show(self.break_dialog)
+        self:rescheduleIn(self.break_length)
+    end
+end
+
+-- Starts a one-off break for a reduced amount of time.
+-- The provided seconds are subtracted from the configured break length.
+-- If the result is less than zero, the break will end immediately.
+function BreakTimer:startBreakWithReducedLength(seconds)
+    logger.dbg("start scheduled break with reduced length")
+    local reduced_break_length = self.break_length - seconds
+    if reduced_break_length < 0 then
+        self:endBreak()
+    else
+        if not self.is_break then
+            self:unschedule()
+            self.is_break = true
+            -- self.break_start = time.now()
+            -- self.break_end = self.break_start + time.s(self.break_length)
+            self.break_dialog = InfoMessage:new{
+                text = _("Time for a break"),
+                -- timeout = self.break_length,
+                dismissable = false,
+                width = 800,
+                height = 1200,
+            }
+            UIManager:show(self.break_dialog)
+            self:rescheduleIn(reduced_break_length)
+        end
+    end
+end
+
+function BreakTimer:endBreak()
+    if self.is_break then
+        logger.dbg("end scheduled break")
+        self:unschedule()
+        self.is_break = false
+        -- self.break_start = 0
+        -- self.break_end = 0
+        -- self.next_break = time.now() + time.s(seconds)
+        UIManager:close(self.break_dialog)
+        self:rescheduleIn(self.break_interval)
+    end
+end
+
+function BreakTimer:resetBreakAndRescheduleIn(seconds)
+    self:unschedule()
+    if self.is_break then
+        self.is_break = false
+        UIManager:close(self.break_dialog)
+    end
+    self:rescheduleIn(seconds)
+end
+
+function BreakTimer:resetBreak()
+    self:resetBreakAndRescheduleIn(self.break_interval)
+end
+
+function BreakTimer:toggleBreak()
+    -- self:unschedule()
+    if self.is_break then
+        self:endBreak()
+    else
+        self:startBreak()
+    end
+end
 
 function BreakTimer:init()
     self.timer_symbol = "\u{23F2}"  -- ⏲ timer symbol
@@ -39,22 +124,21 @@ function BreakTimer:init()
     end
     self.break_length = break_length_hours * 3600 + break_length_minutes * 60
 
+    -- local tip_text =
+
+    -- todo Display the amount of time remaining and update every minute.
+    -- todo Go to sleep for the duration of the break?
+    -- todo When idle for the duration of the break length, reset the break timer.
+    -- self.break_dialog = InfoMessage:new{
+    --     text = tip_text,
+    --     -- timeout = self.break_length,
+    --     dismissable = false,
+    --     width = 400,
+    --     height = 800,
+    -- }
+
     self.break_callback = function()
-        logger.dbg("time for scheduled break")
-        self:unschedule()
-
-        -- todo Display the amount of time remaining and update every minute.
-        -- todo Go to sleep for the duration of the break?
-        UIManager:show(InfoMessage:new{
-                text = tip_text,
-                timeout = self.break_length,
-                dismissable = false,
-                width = 350,
-                height = 750,
-        })
-
-        self:rescheduleIn(self.break_interval + self.break_length)
-        local tip_text = _("Time for a break")
+        self:toggleBreak()
     end
 
     self:rescheduleIn(self.break_interval)
@@ -119,13 +203,27 @@ function BreakTimer:update_status_bars(seconds)
 end
 
 function BreakTimer:scheduled()
-    return self.break_interval ~= 0
+    return  self.break_length > 0 and self.break_interval > 0 and self.next_event > 0
 end
 
 function BreakTimer:remaining()
     if self:scheduled() then
         -- Resolution: time.now() subsecond, os.time() two seconds
-        local remaining_s = time.to_s(self.next_break - time.now())
+        local remaining_s = time.to_s(self.next_event - time.now())
+        if remaining_s > 0 then
+            return remaining_s
+        else
+            return 0
+        end
+    else
+        return math.huge
+    end
+end
+
+function BreakTimer:remainingBreak()
+    if self:scheduled() then
+        -- Resolution: time.now() subsecond, os.time() two seconds
+        local remaining_s = time.to_s(self.break_end - time.now())
         if remaining_s > 0 then
             return remaining_s
         else
@@ -190,7 +288,7 @@ end
 function BreakTimer:unschedule()
     if self:scheduled() then
         UIManager:unschedule(self.break_callback)
-        self.next_break = 0
+        self.next_event = 0
     end
     UIManager:unschedule(self.update_status_bars, self)
 end
@@ -198,7 +296,7 @@ end
 function BreakTimer:rescheduleIn(seconds)
     self:unschedule()
     -- Resolution: time.now() subsecond, os.time() two seconds
-    self.next_break = time.now() + time.s(seconds)
+    self.next_event = time.now() + time.s(seconds)
     UIManager:scheduleIn(seconds, self.break_callback)
     if self.show_value_in_header or self.show_value_in_footer then
         self:update_status_bars(seconds)
@@ -278,7 +376,7 @@ function BreakTimer:addToMainMenu(menu_items)
                             local seconds = timer_time.hour * 3600 + timer_time.min * 60
                             if seconds > 0 then
                                 self.break_interval = seconds
-                                self:rescheduleIn(seconds)
+                                self:resetBreak()
                                 local user_duration_format = G_reader_settings:readSetting("duration_format")
                                 UIManager:show(InfoMessage:new{
                                     -- @translators This is a duration
@@ -342,23 +440,43 @@ function BreakTimer:addToMainMenu(menu_items)
     }
 end
 
+function BreakTimer:onSuspend()
+    -- todo Trigger suspend after a break starts for the length of the break and set a timer to resume when the break finishes
+    if self:scheduled() then
+        logger.dbg("BreakTimer: onSuspend with an active timer")
+        self.idle_start = time.now()
+    end
+end
+
 -- The UI ticks on a MONOTONIC time domain, while this plugin deals with REAL wall clock time.
 function BreakTimer:onResume()
     if self:scheduled() then
         logger.dbg("BreakTimer: onResume with an active timer")
-        local remainder = self:remaining()
-
-        if remainder == 0 then
-            -- Make sure we fire the alarm right away if it expired during suspend...
-            -- self:break_callback()
-            self:rescheduleIn(self.break_interval)
-            -- self:unschedule()
+        -- If we were suspended for at least the length of a break, reset the break period.
+        -- It doesn't matter whether a break was currently active or not.
+        local time_idle_s = time.to_s(self.now() - self.idle_start)
+        if time_idle_s >= self.break_length then
+            self:resetBreak()
         else
-            -- ...and that we re-schedule the timer against the REAL time if it's still ticking.
-            logger.dbg("BreakTimer: Rescheduling in", remainder, "seconds")
-            self:unschedule()
-            self:rescheduleIn(remainder)
+            local remainder = self:remaining()
+            if remainder == 0 then
+                -- The break should have already finished or started by now.
+                if self.is_break then
+                    -- The break should have ended by now.
+                    self:resetBreak()
+                else
+                    -- The break should have started by now.
+                    -- Reduce the length of the break by the amount of time the system was idle, i.e. suspended.
+                    self:startBreakWithReducedTime(time_idle)
+                end
+            else
+                -- There is still time remaining until the next break starts or the current break finishes.
+                -- Reschedule the timer to occur after the remaining time elapses.
+                logger.dbg("BreakTimer: Rescheduling in", remainder, "seconds")
+                self:rescheduleIn(remainder)
+            end
         end
+        self.idle_start = 0
     end
 end
 
