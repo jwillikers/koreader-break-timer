@@ -433,7 +433,7 @@ function BreakTimer:onResume()
         logger.dbg("BreakTimer: onResume with an active timer")
         -- If we were suspended for at least the length of a break, reset the break period.
         -- It doesn't matter whether a break was currently active or not.
-        local time_idle_s = time.to_s(self.now() - self.idle_start)
+        local time_idle_s = time.to_s(time.now() - self.idle_start)
         logger.dbg(string.format("BreakTimer: Was idle for %d seconds", time_idle_s))
         if time_idle_s >= self.break_length then
             logger.dbg(string.format("BreakTimer: Idle time (%d seconds) was greater than or equal to the break length (%d seconds), resetting break", time_idle_s, self.break_length))
