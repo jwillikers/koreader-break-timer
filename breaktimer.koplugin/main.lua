@@ -228,7 +228,8 @@ end
 
 function BreakTimer:remaining()
     if self:scheduled() then
-        local remaining_s = self.next_event - os.time()
+        -- local remaining_s = time.to_s(self.next_event - UIManager:getElapsedTimeSinceBoot())
+        local remaining_s = time.to_s(self.next_event - time.now())
         -- Account for the time the that the system was idle
         -- if self.idle_start > 0 then
         --     local time_idle = os.time() - self.idle_start
@@ -309,10 +310,17 @@ end
 function BreakTimer:rescheduleIn(seconds)
     self:unschedule()
     -- Resolution: time.now() subsecond, os.time() two seconds
-    self.next_event = os.time() + seconds
+    -- self.next_event = UIManager:getElapsedTimeSinceBoot() + time.s(seconds)
+    self.next_event = time.now() + time.s(seconds)
+    -- self.next_event = UIManager:getElapsedTimeSinceBoot() + time.s(seconds)
     -- local next_event_fts = time.now() + time.s(seconds)
     UIManager:scheduleIn(seconds, self.break_callback)
-    -- UIManager:schedule(next_event_fts, self.break_callback)
+    -- UIManager:schedule(self.next_event, self.break_callback)
+    if self:isBreak() then
+        logger.dbg(string.format("BreakTimer: Break end scheduled in %d seconds", seconds))
+    else
+        logger.dbg(string.format("BreakTimer: Next break scheduled in %d seconds", seconds))
+    end
     if self.show_value_in_header or self.show_value_in_footer then
         self:update_status_bars(seconds)
     end
@@ -474,13 +482,19 @@ function BreakTimer:onSuspend()
         return
     end
     if self:scheduled() then
+        -- Unschedule the break timer while leaving the value of self.next_event intact
+        logger.dbg("BreakTimer: Unscheduling break callback and status bar update")
+        if self.break_callback then
+            UIManager:unschedule(self.break_callback)
+        end
         logger.dbg("BreakTimer: Recording idle start time")
         -- self.idle_start = time.now()
-        self.idle_start = os.time()
-        logger.dbg(string.format("BreakTimer: Recorded idle start time as %d seconds", self.idle_start))
+        self.idle_start = UIManager:getElapsedTimeSinceBoot()
+        logger.dbg(string.format("BreakTimer: Recorded idle start time as %d seconds", time.to_s(self.idle_start)))
         -- local ui_time = time.to_s(UIManager:getTime())
         -- logger.dbg(string.format("BreakTimer: UIManager time is %d seconds", ui_time))
     end
+    UIManager:unschedule(self.update_status_bars, self)
 end
 
 -- function sleep(n)
@@ -498,11 +512,11 @@ function BreakTimer:onResume()
         -- sleep(1)
         -- If we were suspended for at least the length of a break, reset the break period.
         -- It doesn't matter whether a break was currently active or not.
-        local now_s = os.time()
-        logger.dbg(string.format("BreakTimer: Current time is %d seconds", now_s))
+        local now = UIManager:getElapsedTimeSinceBoot()
+        logger.dbg(string.format("BreakTimer: Current time is %d seconds", time.to_s(now)))
         -- local ui_time = time.to_s(UIManager:getTime())
         -- logger.dbg(string.format("BreakTimer: UIManager time is %d seconds", ui_time))
-        local time_idle_s = now_s - self.idle_start
+        local time_idle_s = time.to_s(now - self.idle_start)
         logger.dbg(string.format("BreakTimer: Was idle for %d seconds", time_idle_s))
         if time_idle_s >= self.break_length then
             logger.dbg(string.format("BreakTimer: Idle time (%d seconds) was greater than or equal to the break length (%d seconds), resetting break", time_idle_s, self.break_length))
