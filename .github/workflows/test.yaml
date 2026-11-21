@@ -2,32 +2,24 @@ name: Test
 
 "on":
   pull_request:
+    branches: ["main"]
   push:
-    branches:
-      - main
+    branches: ["main"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
-  test:
-    name: Test (${{ matrix.lua }})
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # KOReader uses LuaJIT.
-          - lua: luajit
-            package: luajit
-          - lua: lua5.4
-            package: lua5.4
+  check:
+    name: Nix flake check
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - name: Install ${{ matrix.lua }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ${{ matrix.package }}
-      - name: Run the tests
-        run: ${{ matrix.lua }} test/test_breaktimer.lua
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@main
+      # Runs the pre-commit hooks, including luacheck and treefmt, and the unit tests with LuaJIT and Lua 5.4.
+      - name: Check
+        run: nix flake check --print-build-logs

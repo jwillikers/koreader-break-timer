@@ -1,0 +1,3 @@
+[default.extend-words]
+# KOReader's spelling of the InfoMessage field.
+dismissable = "dismissable"

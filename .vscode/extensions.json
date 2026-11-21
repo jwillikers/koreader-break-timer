@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "asciidoctor.asciidoctor-vscode",
+    "mkhl.direnv",
+    "nefrob.vscode-just-syntax",
+    "bbenoist.nix",
+    "editorconfig.editorconfig",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
+    "jnoortheen.nix-ide",
+    "johnnymorganz.stylua",
+    "sumneko.lua"
+  ]
+}

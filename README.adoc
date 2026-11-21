@@ -61,6 +61,35 @@ cp --recursive breaktimer.koplugin/* /run/media/$(id --name --user)/KOBOeReader/
 Any changes to the plugin seem to require a reboot to take effect.
 ====
 
+== Development
+
+This project's development environment is provided by a {Nix} flake.
+It includes LuaJIT, Lua 5.4, luacheck, StyLua and the other tools used for development.
+With {nix-direnv}, the environment loads automatically when entering the project directory.
+Otherwise, enter it manually.
+
+[,sh]
+----
+nix develop
+----
+
+Entering the development environment installs pre-commit hooks which lint the code with luacheck, check formatting with treefmt, and run the unit tests.
+Common tasks are available as {just} recipes.
+
+Format the code with treefmt, which uses StyLua for Lua files.
+
+[,sh]
+----
+just format
+----
+
+Lint, check formatting, and run the tests the same way as CI.
+
+[,sh]
+----
+just check
+----
+
 == Testing
 
 The unit tests run the plugin against lightweight stand-ins for the KOReader modules it uses, with a simulated clock.

@@ -1,0 +1,7 @@
+column_width = 120
+indent_type = "Spaces"
+indent_width = 4
+line_endings = "Unix"
+quote_style = "AutoPreferDouble"
+# Keep KOReader's style of calling constructors with a table, like InfoMessage:new{ ... }.
+call_parentheses = "Input"
