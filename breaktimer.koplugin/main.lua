@@ -115,10 +115,12 @@ function BreakTimer:isBedTime(seconds)
         -- Determine the time when bed time ends.
         local bed_time_end = (self.bed_time_start_seconds + self.bed_time_duration_seconds) % (24 * 3600)
 
+        -- The end of bed time is exclusive, so that bedTimeSecondsRemaining() never returns 0 during bed time.
+        -- Otherwise, the end of bed time would be rescheduled in 0 seconds repeatedly until os.time() ticks over.
         if bed_time_end < self.bed_time_start_seconds then
-            return seconds_into_day <= bed_time_end or seconds_into_day >= self.bed_time_start_seconds
+            return seconds_into_day < bed_time_end or seconds_into_day >= self.bed_time_start_seconds
         else
-            return seconds_into_day >= self.bed_time_start_seconds and seconds_into_day <= bed_time_end
+            return seconds_into_day >= self.bed_time_start_seconds and seconds_into_day < bed_time_end
         end
 
         -- Create the buckets representing when bed time begins and ends in the day.
@@ -300,7 +302,7 @@ function BreakTimer:endBedTime()
 
         if self:enabled() and not self:scheduled() then
             logger.dbg("BreakTimer: Rescheduling next break now that bed time has ended")
-            self:resetBreakAndRescheduleIn(self.break_interval_time)
+            self:resetBreakAndRescheduleIn(self.break_interval)
         end
     end
 end
@@ -332,9 +334,9 @@ function BreakTimer:startBreakWithReducedLength(seconds)
         return
     end
     local reduced_break_length = self.break_length - seconds
-    if self:isBreak() and reduced_break_length <= 0 then
-        logger.dbg("BreakTimer: Break length reduced to 0 or lower. Ending Break")
-        self:endBreak()
+    if reduced_break_length <= 0 then
+        logger.dbg("BreakTimer: Break length reduced to 0 or lower. Skipping break")
+        self:resetBreak()
     elseif not self:isBreak() then
         self.is_break = true
         self:unschedule()
@@ -387,6 +389,19 @@ end
 function BreakTimer:resetBreak()
     logger.dbg("BreakTimer: Resetting break")
     self:resetBreakAndRescheduleIn(self.break_interval)
+end
+
+-- Ends any current break and schedules the next one.
+-- During bed time, the next break is scheduled for one break interval after bed time ends.
+function BreakTimer:resetBreakRespectingBedTime()
+    if self:isBedTime(os.time()) then
+        local delay = self:bedTimeSecondsRemaining(os.time()) + self.break_interval
+        logger.dbg(string.format("BreakTimer: Bed time is active. Scheduling next break after bed time in %d seconds", delay))
+        self:resetBreakAndRescheduleIn(delay)
+    else
+        logger.dbg(string.format("BreakTimer: Scheduling next break in %d seconds", self.break_interval))
+        self:resetBreak()
+    end
 end
 
 function BreakTimer:toggleBreak()
@@ -458,6 +473,42 @@ function BreakTimer:init()
         self:endBedTime()
     end
 
+    -- Read the BreakTimer settings
+    local break_length_hours = 0
+    local break_length_minutes = 4
+    local break_length = G_reader_settings:readSetting("break_timer_break_length")
+    if break_length then
+        break_length_hours = break_length[1]
+        break_length_minutes = break_length[2]
+    end
+    self.break_length = break_length_hours * 3600 + break_length_minutes * 60
+    logger.dbg(string.format("BreakTimer: Break length is %d seconds", self.break_length))
+
+    local break_interval_hours = 0
+    local break_interval_minutes = 19
+    local break_interval = G_reader_settings:readSetting("break_timer_break_interval")
+    if break_interval then
+        break_interval_hours = break_interval[1]
+        break_interval_minutes = break_interval[2]
+    end
+    self.break_interval = break_interval_hours * 3600 + break_interval_minutes * 60
+    logger.dbg(string.format("BreakTimer: Break interval is %d seconds", self.break_interval))
+
+    -- todo Display the amount of time remaining and update every minute.
+    -- todo Go to sleep for the duration of the break?
+    -- todo When idle for the duration of the break length, reset the break timer.
+
+    -- Always create the callback, even when breaks are disabled, so that enabling breaks later from the menu works.
+    self.break_callback = function()
+        logger.dbg("BreakTimer: break callback function called")
+        self:toggleBreak()
+    end
+
+    if self:enabled() then
+        logger.dbg(string.format("BreakTimer: Scheduling initial break in %d seconds", self.break_interval))
+        self:rescheduleIn(self.break_interval)
+    end
+
     -- Schedule bed time
     local os_time = os.time()
     if self:isBedTimeEnabled() then
@@ -505,59 +556,6 @@ function BreakTimer:init()
         end
     end
     logger.dbg("BreakTimer: Finished initializing the bed time timers")
-
-    -- Read the BreakTimer settings
-    local break_length_hours = 0
-    local break_length_minutes = 4
-    local break_length = G_reader_settings:readSetting("break_timer_break_length")
-    if break_length then
-        break_length_hours = break_length[1]
-        break_length_minutes = break_length[2]
-    end
-    self.break_length = break_length_hours * 3600 + break_length_minutes * 60
-    logger.dbg(string.format("BreakTimer: Break length is %d seconds", self.break_length))
-
-    local break_interval_hours = 0
-    local break_interval_minutes = 19
-    local break_interval = G_reader_settings:readSetting("break_timer_break_interval")
-    if break_interval then
-        break_interval_hours = break_interval[1]
-        break_interval_minutes = break_interval[2]
-    end
-    self.break_interval = break_interval_hours * 3600 + break_interval_minutes * 60
-    logger.dbg(string.format("BreakTimer: Break interval is %d seconds", self.break_interval))
-
-    local break_length_hours = 0
-    local break_length_minutes = 4
-    local break_length = G_reader_settings:readSetting("break_timer_break_length")
-    if break_length then
-        break_length_hours = break_length[1]
-        break_length_minutes = break_length[2]
-    end
-    self.break_length = break_length_hours * 3600 + break_length_minutes * 60
-    logger.dbg(string.format("BreakTimer: Break length is %d seconds", self.break_length))
-
-    -- local tip_text =
-
-    -- todo Display the amount of time remaining and update every minute.
-    -- todo Go to sleep for the duration of the break?
-    -- todo When idle for the duration of the break length, reset the break timer.
-    -- self.break_dialog = InfoMessage:new{
-    --     text = tip_text,
-    --     -- timeout = self.break_length,
-    --     dismissable = false,
-    --     width = 400,
-    --     height = 800,
-    -- }
-    if not (self.break_interval == 0 and self.break_length == 0) then
-        self.break_callback = function()
-            logger.dbg("BreakTimer: break callback function called")
-            self:toggleBreak()
-        end
-
-        logger.dbg(string.format("BreakTimer: Scheduling initial break in %d seconds", self.break_interval))
-        self:rescheduleIn(self.break_interval)
-    end
 
     self.additional_header_content_func = function()
         if self:scheduled() then
@@ -808,7 +806,8 @@ function BreakTimer:addToMainMenu(menu_items)
                                 G_reader_settings:saveSetting("break_timer_break_interval", break_interval_time)
                             end
                             if seconds > 0 then
-                                self:resetBreak()
+                                logger.dbg(string.format("BreakTimer: Break interval updated to %d seconds", self.break_interval))
+                                self:resetBreakRespectingBedTime()
                                 local user_duration_format = G_reader_settings:readSetting("duration_format")
                                 UIManager:show(InfoMessage:new{
                                     -- @translators This is a duration
@@ -817,11 +816,6 @@ function BreakTimer:addToMainMenu(menu_items)
                                     timeout = 5,
                                 })
                                 if touchmenu_instance then touchmenu_instance:updateItems() end
-                                if self:enabled() and previous_break_interval ~= self.break_interval then
-                                    logger.dbg("BreakTimer: Break interval updated")
-                                    logger.dbg(string.format("BreakTimer: Rescheduling break in %d seconds", self.break_interval))
-                                    self:rescheduleIn(self.break_interval)
-                                end
                             else
                                 self:unschedule()
                                 logger.dbg("BreakTimer: Break interval set to 0. Disabling breaking")
@@ -873,20 +867,32 @@ function BreakTimer:addToMainMenu(menu_items)
                                              datetime.secondsToClockDuration(user_duration_format, seconds, true)),
                                     timeout = 5,
                                 })
-                                if touchmenu_instance then touchmenu_instance:updateItems() end
-                                if not previously_enabled and self:enabled() then
+                                if self:enabled() then
                                     logger.dbg(string.format("BreakTimer: Break duration updated to %d seconds", self.break_length))
-                                    logger.dbg(string.format("BreakTimer: Scheduling initial break in %d seconds", self.break_interval))
-                                    self:rescheduleIn(self.break_interval)
+                                    if not previously_enabled then
+                                        self:resetBreakRespectingBedTime()
+                                    elseif self:isBreak() and self:scheduled() then
+                                        -- A break is in progress, so adjust when it ends by the change in break length.
+                                        local remaining = self:remaining() + (self.break_length - previous_break_length)
+                                        if remaining <= 0 then
+                                            logger.dbg("BreakTimer: The new break length has already elapsed. Ending break")
+                                            self:endBreak()
+                                        else
+                                            logger.dbg(string.format("BreakTimer: Rescheduling end of current break in %d seconds", remaining))
+                                            self:rescheduleIn(remaining)
+                                        end
+                                    end
                                 end
+                                if touchmenu_instance then touchmenu_instance:updateItems() end
                             else
                                 self:unschedule()
                                 logger.dbg("BreakTimer: Break duration set to 0. Disabling breaking")
+                                self.is_break = false
                                 if self.break_dialog then
-                                    self.is_break = false
                                     UIManager:close(self.break_dialog)
                                     self.break_dialog = nil
                                 end
+                                if touchmenu_instance then touchmenu_instance:updateItems() end
                             end
                         end
                     }
@@ -1158,7 +1164,7 @@ function BreakTimer:onResume()
             end
         end
         self.idle_start = 0
-    else
+    elseif self:enabled() then
         if self:isBreak() then
             logger.dbg("BreakTimer: Not scheduled. Resetting current break.")
             self:resetBreak()
