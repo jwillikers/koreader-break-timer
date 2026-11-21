@@ -15,7 +15,9 @@ local MINUTE, HOUR = 60, 3600
 local DEFAULT_INTERVAL, DEFAULT_LENGTH = 19 * MINUTE, 4 * MINUTE
 
 local tests = {}
-local function test(name, fn) table.insert(tests, { name = name, fn = fn }) end
+local function test(name, fn)
+    table.insert(tests, { name = name, fn = fn })
+end
 
 local function assertNear(actual, expected, message)
     if type(actual) ~= "number" or math.abs(actual - expected) >= 1 then
@@ -26,8 +28,15 @@ end
 local function assertBreakShown(env, timer, expected)
     local shown = timer.break_dialog ~= nil and env.shown[timer.break_dialog] == true
     if timer:isBreak() ~= expected or shown ~= expected then
-        error(string.format("expected break %s, got isBreak=%s dialog shown=%s",
-            expected and "active" or "inactive", tostring(timer:isBreak()), tostring(shown)), 2)
+        error(
+            string.format(
+                "expected break %s, got isBreak=%s dialog shown=%s",
+                expected and "active" or "inactive",
+                tostring(timer:isBreak()),
+                tostring(shown)
+            ),
+            2
+        )
     end
 end
 
@@ -282,7 +291,9 @@ test("isBedTime handles bed time that wraps past midnight", function(env)
     enableBedTime(env, 22, 8) -- 22:00 to 06:00
     env.setTimeOfDay(12, 0)
     local timer = env.newTimer()
-    local function at(h, m, s) return h * HOUR + (m or 0) * MINUTE + (s or 0) end
+    local function at(h, m, s)
+        return h * HOUR + (m or 0) * MINUTE + (s or 0)
+    end
     assert(not timer:isBedTime(at(21, 59, 59)))
     assert(timer:isBedTime(at(22, 0)))
     assert(timer:isBedTime(at(0, 0)))
@@ -393,8 +404,10 @@ test("closing the plugin cleans up everything", function(env)
     assertBedTimeShown(env, timer, false)
     assert(not timer:scheduled())
     for _, entry in ipairs(env.scheduled) do
-        assert(entry.fn ~= timer.bed_time_start_callback and entry.fn ~= timer.bed_time_end_callback,
-            "bed time callback still scheduled")
+        assert(
+            entry.fn ~= timer.bed_time_start_callback and entry.fn ~= timer.bed_time_end_callback,
+            "bed time callback still scheduled"
+        )
     end
 end)
 
@@ -410,7 +423,9 @@ for _, t in ipairs(tests) do
     else
         local env = Stubs.new(PLUGIN_DIR)
         local restore = env.install()
-        local ok, err = xpcall(function() t.fn(env) end, debug.traceback)
+        local ok, err = xpcall(function()
+            t.fn(env)
+        end, debug.traceback)
         restore()
         if ok then
             passed = passed + 1
@@ -421,6 +436,12 @@ for _, t in ipairs(tests) do
         end
     end
 end
-print(string.format("\n%d passed, %d failed%s", passed, failed,
-    skipped > 0 and string.format(", %d skipped", skipped) or ""))
+print(
+    string.format(
+        "\n%d passed, %d failed%s",
+        passed,
+        failed,
+        skipped > 0 and string.format(", %d skipped", skipped) or ""
+    )
+)
 os.exit(failed == 0 and 0 or 1)

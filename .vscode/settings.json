@@ -1,15 +1,19 @@
 {
-    "cSpell.words": [
-        "adoc",
-        "Asciidoctor",
-        "audiobook",
-        "Brainz",
-        "breaktimer",
-        "direnv",
-        "dismissable",
-        "ifdef",
-        "koplugin",
-        "koreader",
-        "Nushell"
-    ]
+  "cSpell.words": [
+    "adoc",
+    "Asciidoctor",
+    "audiobook",
+    "Brainz",
+    "breaktimer",
+    "direnv",
+    "dismissable",
+    "ifdef",
+    "koplugin",
+    "koreader",
+    "luacheck",
+    "luajit",
+    "Nushell",
+    "stylua",
+    "treefmt"
+  ]
 }

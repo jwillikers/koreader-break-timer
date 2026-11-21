@@ -1,0 +1,52 @@
+name: Check files with treefmt
+"on":
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "**.json"
+      - "**.just"
+      - "**.lua"
+      - "**.nix"
+      - "**.toml"
+      - "**.yaml"
+      - "**.yml"
+      - "**/.justfile"
+      - "**/justfile"
+      - .github/workflows/treefmt.yaml
+      - flake.lock
+      - stylua.toml
+  push:
+    branches: ["main"]
+    paths:
+      - "**.json"
+      - "**.just"
+      - "**.lua"
+      - "**.nix"
+      - "**.toml"
+      - "**.yaml"
+      - "**.yml"
+      - "**/.justfile"
+      - "**/justfile"
+      - .github/workflows/treefmt.yaml
+      - flake.lock
+      - stylua.toml
+
+jobs:
+  treefmt:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@main
+      - name: Run treefmt
+        run: nix develop --command treefmt --ci
+      - uses: reviewdog/action-suggester@v1
+        with:
+          fail_on_error: true
+          github_token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
+          tool_name: treefmt

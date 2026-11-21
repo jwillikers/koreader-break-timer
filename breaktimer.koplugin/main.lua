@@ -14,9 +14,9 @@ local T = require("ffi/util").template
 -- todo Implement the break screen / dialog using something that doesn't respond to input events.
 -- Currently, it's possible to move the dialog around.
 
-local BreakTimer = WidgetContainer:extend{
+local BreakTimer = WidgetContainer:extend {
     name = "breaktimer",
-    next_event = 0,  -- The time until the next break starts or the current break ends
+    next_event = 0, -- The time until the next break starts or the current break ends
     break_interval = 1140, -- The length of time between breaks in seconds
     break_length = 240, -- The length of the break in seconds
     idle_start = 0, -- The time when suspend (idle) started
@@ -124,49 +124,48 @@ function BreakTimer:isBedTime(seconds)
         end
 
         -- Create the buckets representing when bed time begins and ends in the day.
-    --     local bed_time_schedule_table = {}
-    --     if bed_time_end < self.bed_time_start_seconds then
-    --         bed_time_schedule_table[0] = true
-    --         -- Add an additional second here as that's when it switches to not being bed time.
-    --         bed_time_schedule_table[bed_time_end + 1] = false
-    --         bed_time_schedule_table[self.bed_time_start_seconds] = true
-    --     else
-    --         bed_time_schedule_table[0] = false
-    --         bed_time_schedule_table[self.bed_time_start_seconds] = true
-    --         -- Add an additional second here as that's when it switches to not being bed time.
-    --         bed_time_schedule_table[bed_time_end + 1] = false
-    --     end
+        --     local bed_time_schedule_table = {}
+        --     if bed_time_end < self.bed_time_start_seconds then
+        --         bed_time_schedule_table[0] = true
+        --         -- Add an additional second here as that's when it switches to not being bed time.
+        --         bed_time_schedule_table[bed_time_end + 1] = false
+        --         bed_time_schedule_table[self.bed_time_start_seconds] = true
+        --     else
+        --         bed_time_schedule_table[0] = false
+        --         bed_time_schedule_table[self.bed_time_start_seconds] = true
+        --         -- Add an additional second here as that's when it switches to not being bed time.
+        --         bed_time_schedule_table[bed_time_end + 1] = false
+        --     end
 
-    --     -- Sort the start times in reverse order
-    --     -- local bed_time_schedule_table_keys = {}
-    --     -- for key in pairs(bed_time_schedule_table) do
-    --     --     table.insert(bed_time_schedule_table_keys, key)
-    --     -- end
-    --     -- table.sort(bed_time_schedule_table_keys, function(a, b) return a[1] >= b[1] end)
-    --     table.sort(bed_time_schedule_table, function(a, b) return a[1] >= b[1] end)
+        --     -- Sort the start times in reverse order
+        --     -- local bed_time_schedule_table_keys = {}
+        --     -- for key in pairs(bed_time_schedule_table) do
+        --     --     table.insert(bed_time_schedule_table_keys, key)
+        --     -- end
+        --     -- table.sort(bed_time_schedule_table_keys, function(a, b) return a[1] >= b[1] end)
+        --     table.sort(bed_time_schedule_table, function(a, b) return a[1] >= b[1] end)
 
-    --     -- Now find in which bucket the current time resides.
-    --     for start_time, is_bed_time in ipairs(bed_time_schedule_table) do
-    --         if seconds_into_day >= start_time then
-    --             if is_bed_time then
-    --                 logger.dbg("BreakTimer: isBedTime return: true")
-    --             else
-    --                 logger.dbg("BreakTimer: isBedTime return: false")
-    --             end
-    --             return is_bed_time
-    --         end
-    --     end
+        --     -- Now find in which bucket the current time resides.
+        --     for start_time, is_bed_time in ipairs(bed_time_schedule_table) do
+        --         if seconds_into_day >= start_time then
+        --             if is_bed_time then
+        --                 logger.dbg("BreakTimer: isBedTime return: true")
+        --             else
+        --                 logger.dbg("BreakTimer: isBedTime return: false")
+        --             end
+        --             return is_bed_time
+        --         end
+        --     end
 
-    --     -- We shouldn't ever get here since it would require the the current time to be negative to make in the previous loop.
-    --     return false
+        --     -- We shouldn't ever get here since it would require the the current time to be negative to make in the previous loop.
+        --     return false
     else
         return false
     end
 end
-dbg:guard(BreakTimer, 'isBedTime',
-    function(self, seconds)
-        assert(seconds >= 0, "Only positive seconds allowed")
-    end)
+dbg:guard(BreakTimer, "isBedTime", function(self, seconds)
+    assert(seconds >= 0, "Only positive seconds allowed")
+end)
 
 function BreakTimer:hasBedTimeBreakStarted()
     return self.bed_time_dialog ~= nil
@@ -187,18 +186,24 @@ function BreakTimer:secondsUntilBedTime(seconds)
     logger.dbg(string.format("BreakTimer: secondsUntilBedTime bed_time_end: %d", bed_time_end))
 
     if seconds_into_day < self.bed_time_start_seconds then
-        logger.dbg(string.format("BreakTimer: secondsUntilBedTime return: %d", self.bed_time_start_seconds - seconds_into_day))
+        logger.dbg(
+            string.format("BreakTimer: secondsUntilBedTime return: %d", self.bed_time_start_seconds - seconds_into_day)
+        )
         return self.bed_time_start_seconds - seconds_into_day
     else
-        logger.dbg(string.format("BreakTimer: secondsUntilBedTime return: %d", (self.bed_time_start_seconds + (24 * 3600)) - seconds_into_day))
+        logger.dbg(
+            string.format(
+                "BreakTimer: secondsUntilBedTime return: %d",
+                (self.bed_time_start_seconds + (24 * 3600)) - seconds_into_day
+            )
+        )
         -- Bed time doesn't start until tomorrow now.
         return (self.bed_time_start_seconds + (24 * 3600)) - seconds_into_day
     end
 end
-dbg:guard(BreakTimer, 'secondsUntilBedTime',
-    function(self, seconds)
-        assert(seconds >= 0, "Only positive seconds allowed")
-    end)
+dbg:guard(BreakTimer, "secondsUntilBedTime", function(self, seconds)
+    assert(seconds >= 0, "Only positive seconds allowed")
+end)
 
 -- Seconds remaining during the current bed time otherwise math.huge seconds
 function BreakTimer:bedTimeSecondsRemaining(seconds)
@@ -212,10 +217,20 @@ function BreakTimer:bedTimeSecondsRemaining(seconds)
 
     -- Determine the time when bed time ends.
     local bed_time_end = (self.bed_time_start_seconds + self.bed_time_duration_seconds) % (24 * 3600)
-    logger.dbg(string.format("BreakTimer: bedTimeSecondsRemaining bed_time_end: %d", (self.bed_time_start_seconds + self.bed_time_duration_seconds) % (24 * 3600)))
+    logger.dbg(
+        string.format(
+            "BreakTimer: bedTimeSecondsRemaining bed_time_end: %d",
+            (self.bed_time_start_seconds + self.bed_time_duration_seconds) % (24 * 3600)
+        )
+    )
 
     if seconds_into_day > bed_time_end then
-        logger.dbg(string.format("BreakTimer: bedTimeSecondsRemaining return: %d", (bed_time_end + (24 * 3600)) - seconds_into_day))
+        logger.dbg(
+            string.format(
+                "BreakTimer: bedTimeSecondsRemaining return: %d",
+                (bed_time_end + (24 * 3600)) - seconds_into_day
+            )
+        )
         -- Bed time doesn't end until tomorrow now.
         return (bed_time_end + (24 * 3600)) - seconds_into_day
     else
@@ -223,10 +238,9 @@ function BreakTimer:bedTimeSecondsRemaining(seconds)
         return bed_time_end - seconds_into_day
     end
 end
-dbg:guard(BreakTimer, 'bedTimeSecondsRemaining',
-    function(self, seconds)
-        assert(seconds >= 0, "Only positive seconds allowed")
-    end)
+dbg:guard(BreakTimer, "bedTimeSecondsRemaining", function(self, seconds)
+    assert(seconds >= 0, "Only positive seconds allowed")
+end)
 
 function BreakTimer:startBedTime()
     logger.dbg("BreakTimer: startBedTime")
@@ -235,12 +249,17 @@ function BreakTimer:startBedTime()
             logger.dbg("BreakTimer: Starting bed time")
             local seconds_until_bed_time_ends = self:bedTimeSecondsRemaining(os.time())
             if self:enabled() then
-                logger.dbg(string.format("BreakTimer: Scheduling next break to begin after bed time ends in %d seconds", seconds_until_bed_time_ends + self.break_interval))
+                logger.dbg(
+                    string.format(
+                        "BreakTimer: Scheduling next break to begin after bed time ends in %d seconds",
+                        seconds_until_bed_time_ends + self.break_interval
+                    )
+                )
                 self:resetBreakAndRescheduleIn(seconds_until_bed_time_ends + self.break_interval)
             end
 
             logger.dbg("BreakTimer: Creating bed time dialog")
-            self.bed_time_dialog = InfoMessage:new{
+            self.bed_time_dialog = InfoMessage:new {
                 text = _("Time for bed"),
                 dismissable = false,
                 width = 800,
@@ -252,7 +271,9 @@ function BreakTimer:startBedTime()
         else
             logger.dbg("BreakTimer: Spurious call of startBedTime outside of bed time")
             local seconds_until_bed_time = self:secondsUntilBedTime(os.time())
-            logger.dbg(string.format("BreakTimer: Rescheduling beginning of bed time in %d seconds", seconds_until_bed_time))
+            logger.dbg(
+                string.format("BreakTimer: Rescheduling beginning of bed time in %d seconds", seconds_until_bed_time)
+            )
             UIManager:scheduleIn(seconds_until_bed_time, self.bed_time_start_callback)
 
             if self.bed_time_dialog ~= nil then
@@ -263,7 +284,12 @@ function BreakTimer:startBedTime()
 
             -- Ensure that breaks are scheduled to resume after bed time.
             if self:enabled() and not self:scheduled() then
-                logger.dbg(string.format("BreakTimer: Breaks enabled but not currently scheduled! Scheduling next break in %d seconds", self.break_interval))
+                logger.dbg(
+                    string.format(
+                        "BreakTimer: Breaks enabled but not currently scheduled! Scheduling next break in %d seconds",
+                        self.break_interval
+                    )
+                )
                 self:resetBreakAndRescheduleIn(self.break_interval)
             end
         end
@@ -280,7 +306,7 @@ function BreakTimer:endBedTime()
 
         if self.bed_time_dialog == nil then
             logger.dbg("BreakTimer: The bed time dialog does not exist! Creating and showing the bed time dialog")
-            self.bed_time_dialog = InfoMessage:new{
+            self.bed_time_dialog = InfoMessage:new {
                 text = _("Time for bed"),
                 dismissable = false,
                 width = 800,
@@ -297,7 +323,9 @@ function BreakTimer:endBedTime()
         self.bed_time_dialog = nil
 
         local seconds_until_bed_time_starts = self:secondsUntilBedTime(os.time())
-        logger.dbg(string.format("BreakTimer: Scheduling bed time to start in %d seconds", seconds_until_bed_time_starts))
+        logger.dbg(
+            string.format("BreakTimer: Scheduling bed time to start in %d seconds", seconds_until_bed_time_starts)
+        )
         UIManager:scheduleIn(seconds_until_bed_time_starts, self.bed_time_start_callback)
 
         if self:enabled() and not self:scheduled() then
@@ -313,7 +341,7 @@ function BreakTimer:startBreak()
         self.is_break = true
         self:unschedule()
         logger.dbg("BreakTimer: Creating break dialog")
-        self.break_dialog = InfoMessage:new{
+        self.break_dialog = InfoMessage:new {
             text = _("Time for a break"),
             dismissable = false,
             width = 800,
@@ -343,7 +371,7 @@ function BreakTimer:startBreakWithReducedLength(seconds)
         -- self.break_start = time.now()
         -- self.break_end = self.break_start + time.s(self.break_length)
         logger.dbg("BreakTimer: Opening break dialog for a reduced amount of time")
-        self.break_dialog = InfoMessage:new{
+        self.break_dialog = InfoMessage:new {
             text = _("Time for a break"),
             -- timeout = self.break_length,
             dismissable = false,
@@ -396,7 +424,9 @@ end
 function BreakTimer:resetBreakRespectingBedTime()
     if self:isBedTime(os.time()) then
         local delay = self:bedTimeSecondsRemaining(os.time()) + self.break_interval
-        logger.dbg(string.format("BreakTimer: Bed time is active. Scheduling next break after bed time in %d seconds", delay))
+        logger.dbg(
+            string.format("BreakTimer: Bed time is active. Scheduling next break after bed time in %d seconds", delay)
+        )
         self:resetBreakAndRescheduleIn(delay)
     else
         logger.dbg(string.format("BreakTimer: Scheduling next break in %d seconds", self.break_interval))
@@ -410,15 +440,21 @@ function BreakTimer:toggleBreak()
     if self:isBedTimeEnabled() then
         if self:isBedTime(os.time()) then
             if self:hasBedTimeBreakStarted() then
-                logger.dbg("BreakTimer: Turns out the bed time break has already started. Skipping toggling current break and not rescheduling")
+                logger.dbg(
+                    "BreakTimer: Turns out the bed time break has already started. Skipping toggling current break and not rescheduling"
+                )
             else
-                logger.dbg("BreakTimer: Turns out it's bed time but the bed time break hasn't started yet. Starting bed time break")
+                logger.dbg(
+                    "BreakTimer: Turns out it's bed time but the bed time break hasn't started yet. Starting bed time break"
+                )
                 self:startBedTime()
             end
             return
         else
             if self:hasBedTimeBreakStarted() then
-                logger.dbg("BreakTimer: For some reason the bed time break hasn't ended despite the fact that it's no longer bed time. Ending bed time break and skipping toggling current break")
+                logger.dbg(
+                    "BreakTimer: For some reason the bed time break hasn't ended despite the fact that it's no longer bed time. Ending bed time break and skipping toggling current break"
+                )
                 self:endBedTime()
                 return
             end
@@ -427,7 +463,12 @@ function BreakTimer:toggleBreak()
     if self:enabled() then
         local remaining_s = self:remaining()
         if remaining_s > 0 then
-            logger.dbg(string.format("BreakTimer: Spurious callback before the next event should trigger in %d seconds", remaining_s))
+            logger.dbg(
+                string.format(
+                    "BreakTimer: Spurious callback before the next event should trigger in %d seconds",
+                    remaining_s
+                )
+            )
             return
         end
         if self:isBreak() then
@@ -439,7 +480,7 @@ function BreakTimer:toggleBreak()
 end
 
 function BreakTimer:init()
-    self.timer_symbol = "\u{23F2}"  -- ⏲ timer symbol
+    self.timer_symbol = "\u{23F2}" -- ⏲ timer symbol
     self.timer_letter = "B"
 
     -- Read the BedTime settings
@@ -522,14 +563,20 @@ function BreakTimer:init()
                 local remainder_seconds = self:bedTimeSecondsRemaining(os_time)
                 if remainder_seconds == math.huge then
                     -- Should not be possible.
-                    logger.dbg("BreakTimer: bedTimeSecondsRemaining returned math.huge when bed time is enabled and it is currently bed time!")
+                    logger.dbg(
+                        "BreakTimer: bedTimeSecondsRemaining returned math.huge when bed time is enabled and it is currently bed time!"
+                    )
                 else
-                    logger.dbg(string.format("BreakTimer: Scheduling the end of bed time in %d seconds", remainder_seconds))
+                    logger.dbg(
+                        string.format("BreakTimer: Scheduling the end of bed time in %d seconds", remainder_seconds)
+                    )
                     UIManager:scheduleIn(remainder_seconds, self.bed_time_end_callback)
                 end
             else
                 -- Initiate bed time.
-                logger.dbg("BreakTimer: It is bed time but the bed time break has not yet started. Starting bed time break")
+                logger.dbg(
+                    "BreakTimer: It is bed time but the bed time break has not yet started. Starting bed time break"
+                )
                 -- UIManager:unschedule(self.bed_time_start_callback)
                 self:startBedTime()
             end
@@ -547,9 +594,13 @@ function BreakTimer:init()
                 local remainder_seconds = self:secondsUntilBedTime(os_time)
                 if remainder_seconds == math.huge then
                     -- Should not be possible.
-                    logger.dbg("BreakTimer: secondsUntilBedTime returned math.huge when bed time is enabled and it is not currently bed time!")
+                    logger.dbg(
+                        "BreakTimer: secondsUntilBedTime returned math.huge when bed time is enabled and it is not currently bed time!"
+                    )
                 else
-                    logger.dbg(string.format("BreakTimer: Rescheduling start of bed time in %d seconds", remainder_seconds))
+                    logger.dbg(
+                        string.format("BreakTimer: Rescheduling start of bed time in %d seconds", remainder_seconds)
+                    )
                     UIManager:scheduleIn(remainder_seconds, self.bed_time_start_callback)
                 end
             end
@@ -559,7 +610,7 @@ function BreakTimer:init()
 
     self.additional_header_content_func = function()
         if self:scheduled() then
-            local hours, minutes, dummy = self:remainingTime(1)
+            local hours, minutes = self:remainingTime(1)
             local timer_info = string.format("%02d:%02d", hours, minutes)
             return self.timer_symbol .. timer_info
         end
@@ -569,7 +620,7 @@ function BreakTimer:init()
     self.additional_footer_content_func = function()
         if self:scheduled() then
             local item_prefix = self.ui.view.footer.settings.item_prefix
-            local hours, minutes, dummy = self:remainingTime(1)
+            local hours, minutes = self:remainingTime(1)
             local timer_info = string.format("%02d:%02d", hours, minutes)
 
             if item_prefix == "icons" then
@@ -596,7 +647,6 @@ function BreakTimer:init()
 
     self.ui.menu:registerToMainMenu(self)
     logger.dbg("registered to main menu")
-
 end
 
 function BreakTimer:update_status_bars(seconds)
@@ -608,9 +658,9 @@ function BreakTimer:update_status_bars(seconds)
     end
     -- if seconds schedule 1ms later
     if seconds and seconds >= 0 then
-        UIManager:scheduleIn(math.max(math.floor(seconds)%60, 0.001), self.update_status_bars, self)
+        UIManager:scheduleIn(math.max(math.floor(seconds) % 60, 0.001), self.update_status_bars, self)
     elseif seconds and seconds < 0 and self:scheduled() then
-        UIManager:scheduleIn(math.max(math.floor(self:remaining())%60, 0.001), self.update_status_bars, self)
+        UIManager:scheduleIn(math.max(math.floor(self:remaining()) % 60, 0.001), self.update_status_bars, self)
     else
         UIManager:scheduleIn(60, self.update_status_bars, self)
     end
@@ -660,11 +710,11 @@ function BreakTimer:remainingTime(round)
             else -- round up
                 remainder = remainder + 59
             end
-            remainder = math.floor(remainder * (1/60)) * 60
+            remainder = math.floor(remainder * (1 / 60)) * 60
         end
 
-        local hours = math.floor(remainder * (1/3600))
-        local minutes = math.floor(remainder % 3600 * (1/60))
+        local hours = math.floor(remainder * (1 / 3600))
+        local minutes = math.floor(remainder % 3600 * (1 / 60))
         local seconds = math.floor(remainder % 60)
         return hours, minutes, seconds
     end
@@ -729,7 +779,7 @@ function BreakTimer:rescheduleIn(seconds)
 end
 
 function BreakTimer:addCheckboxes(widget)
-    local checkbox_header = CheckButton:new{
+    local checkbox_header = CheckButton:new {
         text = _("Show timer in alt status bar"),
         checked = self.show_value_in_header,
         parent = widget,
@@ -743,7 +793,7 @@ function BreakTimer:addCheckboxes(widget)
             end
         end,
     }
-    local checkbox_footer = CheckButton:new{
+    local checkbox_footer = CheckButton:new {
         text = _("Show timer in status bar"),
         checked = self.show_value_in_footer,
         parent = widget,
@@ -766,8 +816,10 @@ function BreakTimer:addToMainMenu(menu_items)
         text_func = function()
             if self:scheduled() then
                 local user_duration_format = G_reader_settings:readSetting("duration_format")
-                return T(_("Break timer (%1)"),
-                    datetime.secondsToClockDuration(user_duration_format, self:remaining(), false))
+                return T(
+                    _("Break timer (%1)"),
+                    datetime.secondsToClockDuration(user_duration_format, self:remaining(), false)
+                )
             else
                 return _("Break timer")
             end
@@ -781,41 +833,49 @@ function BreakTimer:addToMainMenu(menu_items)
                 text = _("Set break interval"),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local break_interval_time = {}
                     local break_interval_hours = 0
                     local break_interval_minutes = 19
-                    break_interval_time = G_reader_settings:readSetting("break_timer_break_interval")
+                    local break_interval_time = G_reader_settings:readSetting("break_timer_break_interval")
                     if break_interval_time then
                         break_interval_hours = break_interval_time[1]
                         break_interval_minutes = break_interval_time[2]
                     end
                     local previous_break_interval = self.break_interval
-                    local time_widget = DateTimeWidget:new{
+                    local time_widget = DateTimeWidget:new {
                         hour = break_interval_hours or 0,
                         min = break_interval_minutes or 19,
                         hour_max = 17,
                         ok_text = _("Set break interval"),
-                        title_text =  _("Set break timer interval"),
+                        title_text = _("Set break timer interval"),
                         info_text = _("Enter a time in hours and minutes."),
                         callback = function(timer_time)
                             self:unschedule()
                             local seconds = timer_time.hour * 3600 + timer_time.min * 60
                             self.break_interval = seconds
-                            break_interval_time = {timer_time.hour, timer_time.min}
+                            break_interval_time = { timer_time.hour, timer_time.min }
                             if previous_break_interval ~= self.break_interval then
                                 G_reader_settings:saveSetting("break_timer_break_interval", break_interval_time)
                             end
                             if seconds > 0 then
-                                logger.dbg(string.format("BreakTimer: Break interval updated to %d seconds", self.break_interval))
+                                logger.dbg(
+                                    string.format(
+                                        "BreakTimer: Break interval updated to %d seconds",
+                                        self.break_interval
+                                    )
+                                )
                                 self:resetBreakRespectingBedTime()
                                 local user_duration_format = G_reader_settings:readSetting("duration_format")
-                                UIManager:show(InfoMessage:new{
+                                UIManager:show(InfoMessage:new {
                                     -- @translators This is a duration
-                                    text = T(_("Break interval is %1."),
-                                             datetime.secondsToClockDuration(user_duration_format, seconds, true)),
+                                    text = T(
+                                        _("Break interval is %1."),
+                                        datetime.secondsToClockDuration(user_duration_format, seconds, true)
+                                    ),
                                     timeout = 5,
                                 })
-                                if touchmenu_instance then touchmenu_instance:updateItems() end
+                                if touchmenu_instance then
+                                    touchmenu_instance:updateItems()
+                                end
                             else
                                 self:unschedule()
                                 logger.dbg("BreakTimer: Break interval set to 0. Disabling breaking")
@@ -825,7 +885,7 @@ function BreakTimer:addToMainMenu(menu_items)
                                     self.break_dialog = nil
                                 end
                             end
-                        end
+                        end,
                     }
                     self:addCheckboxes(time_widget)
                     UIManager:show(time_widget)
@@ -835,55 +895,70 @@ function BreakTimer:addToMainMenu(menu_items)
                 text = _("Set break length"),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local break_length_time = {}
                     local break_length_hours = 0
                     local break_length_minutes = 4
-                    break_length_time = G_reader_settings:readSetting("break_timer_break_length")
+                    local break_length_time = G_reader_settings:readSetting("break_timer_break_length")
                     if break_length_time then
                         break_length_hours = break_length_time[1]
                         break_length_minutes = break_length_time[2]
                     end
                     local previously_enabled = self:enabled()
                     local previous_break_length = self.break_length
-                    local time_widget = DateTimeWidget:new{
+                    local time_widget = DateTimeWidget:new {
                         hour = break_length_hours or 0,
                         min = break_length_minutes or 4,
                         hour_max = 17,
                         ok_text = _("Set break length"),
-                        title_text =  _("Set break timer break length"),
+                        title_text = _("Set break timer break length"),
                         info_text = _("Enter a time in hours and minutes."),
                         callback = function(timer_time)
                             local seconds = timer_time.hour * 3600 + timer_time.min * 60
                             self.break_length = seconds
-                            break_length_time = {timer_time.hour, timer_time.min}
+                            break_length_time = { timer_time.hour, timer_time.min }
                             if previous_break_length ~= self.break_length then
                                 G_reader_settings:saveSetting("break_timer_break_length", break_length_time)
                             end
                             if seconds > 0 then
                                 local user_duration_format = G_reader_settings:readSetting("duration_format")
-                                UIManager:show(InfoMessage:new{
+                                UIManager:show(InfoMessage:new {
                                     -- @translators This is a duration
-                                    text = T(_("Break length is %1."),
-                                             datetime.secondsToClockDuration(user_duration_format, seconds, true)),
+                                    text = T(
+                                        _("Break length is %1."),
+                                        datetime.secondsToClockDuration(user_duration_format, seconds, true)
+                                    ),
                                     timeout = 5,
                                 })
                                 if self:enabled() then
-                                    logger.dbg(string.format("BreakTimer: Break duration updated to %d seconds", self.break_length))
+                                    logger.dbg(
+                                        string.format(
+                                            "BreakTimer: Break duration updated to %d seconds",
+                                            self.break_length
+                                        )
+                                    )
                                     if not previously_enabled then
                                         self:resetBreakRespectingBedTime()
                                     elseif self:isBreak() and self:scheduled() then
                                         -- A break is in progress, so adjust when it ends by the change in break length.
                                         local remaining = self:remaining() + (self.break_length - previous_break_length)
                                         if remaining <= 0 then
-                                            logger.dbg("BreakTimer: The new break length has already elapsed. Ending break")
+                                            logger.dbg(
+                                                "BreakTimer: The new break length has already elapsed. Ending break"
+                                            )
                                             self:endBreak()
                                         else
-                                            logger.dbg(string.format("BreakTimer: Rescheduling end of current break in %d seconds", remaining))
+                                            logger.dbg(
+                                                string.format(
+                                                    "BreakTimer: Rescheduling end of current break in %d seconds",
+                                                    remaining
+                                                )
+                                            )
                                             self:rescheduleIn(remaining)
                                         end
                                     end
                                 end
-                                if touchmenu_instance then touchmenu_instance:updateItems() end
+                                if touchmenu_instance then
+                                    touchmenu_instance:updateItems()
+                                end
                             else
                                 self:unschedule()
                                 logger.dbg("BreakTimer: Break duration set to 0. Disabling breaking")
@@ -892,9 +967,11 @@ function BreakTimer:addToMainMenu(menu_items)
                                     UIManager:close(self.break_dialog)
                                     self.break_dialog = nil
                                 end
-                                if touchmenu_instance then touchmenu_instance:updateItems() end
+                                if touchmenu_instance then
+                                    touchmenu_instance:updateItems()
+                                end
                             end
-                        end
+                        end,
                     }
                     UIManager:show(time_widget)
                 end,
@@ -903,39 +980,41 @@ function BreakTimer:addToMainMenu(menu_items)
                 text = _("Set bed time"),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local break_timer_bed_time_start = {}
                     local break_timer_bed_time_start_hour = 22
                     local break_timer_bed_time_start_minute = 0
-                    break_timer_bed_time_start = G_reader_settings:readSetting("break_timer_bed_time_start")
+                    local break_timer_bed_time_start = G_reader_settings:readSetting("break_timer_bed_time_start")
                     if break_timer_bed_time_start then
                         break_timer_bed_time_start_hour = break_timer_bed_time_start[1]
                         break_timer_bed_time_start_minute = break_timer_bed_time_start[2]
                     end
                     local previous_bed_time_start_seconds = self.bed_time_start_seconds
-                    local time_widget = DateTimeWidget:new{
+                    local time_widget = DateTimeWidget:new {
                         hour = break_timer_bed_time_start_hour or 22,
                         min = break_timer_bed_time_start_minute or 0,
                         hour_max = 23,
                         ok_text = _("Set bed time"),
-                        title_text =  _("Set bed time"),
+                        title_text = _("Set bed time"),
                         info_text = _("Enter the hour and minute when bed time begins."),
                         callback = function(timer_time)
                             local seconds = timer_time.hour * 3600 + timer_time.min * 60
                             self.bed_time_start_seconds = seconds
-                            break_timer_bed_time_start = {timer_time.hour, timer_time.min}
+                            break_timer_bed_time_start = { timer_time.hour, timer_time.min }
                             if previous_bed_time_start_seconds ~= self.bed_time_start_seconds then
                                 G_reader_settings:saveSetting("break_timer_bed_time_start", break_timer_bed_time_start)
                             end
                             if seconds > 0 then
-                                local user_duration_format = G_reader_settings:readSetting("duration_format")
-                                UIManager:show(InfoMessage:new{
-                                    -- @translators This is a duration
-                                    text = T(_("Bed time is at %1."),
-                                             datetime.secondsToClock(seconds, false, false)),
+                                UIManager:show(InfoMessage:new {
+                                    -- @translators This is a time of day
+                                    text = T(_("Bed time is at %1."), datetime.secondsToClock(seconds, false, false)),
                                     timeout = 5,
                                 })
-                                if touchmenu_instance then touchmenu_instance:updateItems() end
-                                if self:isBedTimeEnabled() and previous_bed_time_start_seconds ~= self.bed_time_start_seconds then
+                                if touchmenu_instance then
+                                    touchmenu_instance:updateItems()
+                                end
+                                if
+                                    self:isBedTimeEnabled()
+                                    and previous_bed_time_start_seconds ~= self.bed_time_start_seconds
+                                then
                                     if self:isBedTime(os.time()) and not self:hasBedTimeBreakStarted() then
                                         self:startBedTime()
                                     elseif not self:isBedTime(os.time()) and self:hasBedTimeBreakStarted() then
@@ -944,12 +1023,17 @@ function BreakTimer:addToMainMenu(menu_items)
                                         -- Reschedule when bed time starts.
                                         UIManager:unschedule(self.bed_time_start_callback)
                                         local seconds_until_bed_time = self:secondsUntilBedTime(os.time())
-                                        logger.dbg(string.format("BreakTimer: Rescheduling beginning of bed time in %d seconds", seconds_until_bed_time))
+                                        logger.dbg(
+                                            string.format(
+                                                "BreakTimer: Rescheduling beginning of bed time in %d seconds",
+                                                seconds_until_bed_time
+                                            )
+                                        )
                                         UIManager:scheduleIn(seconds_until_bed_time, self.bed_time_start_callback)
                                     end
                                 end
                             end
-                        end
+                        end,
                     }
                     UIManager:show(time_widget)
                 end,
@@ -958,51 +1042,67 @@ function BreakTimer:addToMainMenu(menu_items)
                 text = _("Set bed time duration"),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local bed_time_duration = {}
                     local bed_time_duration_hours = 0
                     local bed_time_duration_minutes = 0
-                    bed_time_duration = G_reader_settings:readSetting("break_timer_bed_time_duration")
+                    local bed_time_duration = G_reader_settings:readSetting("break_timer_bed_time_duration")
                     if bed_time_duration then
                         bed_time_duration_hours = bed_time_duration[1]
                         bed_time_duration_minutes = bed_time_duration[2]
                     end
                     local previous_bed_time_duration_seconds = self.bed_time_duration_seconds
-                    local time_widget = DateTimeWidget:new{
+                    local time_widget = DateTimeWidget:new {
                         hour = bed_time_duration_hours or 8,
                         min = bed_time_duration_minutes or 0,
                         hour_max = 23,
                         ok_text = _("Set bed time duration"),
-                        title_text =  _("Set bed time duration"),
+                        title_text = _("Set bed time duration"),
                         info_text = _("Enter a time in hours and minutes."),
                         callback = function(timer_time)
                             local seconds = timer_time.hour * 3600 + timer_time.min * 60
                             self.bed_time_duration_seconds = seconds
-                            bed_time_duration = {timer_time.hour, timer_time.min}
+                            bed_time_duration = { timer_time.hour, timer_time.min }
                             if previous_bed_time_duration_seconds ~= self.bed_time_duration_seconds then
                                 G_reader_settings:saveSetting("break_timer_bed_time_duration", bed_time_duration)
                             end
                             if seconds > 0 then
                                 local user_duration_format = G_reader_settings:readSetting("duration_format")
-                                UIManager:show(InfoMessage:new{
+                                UIManager:show(InfoMessage:new {
                                     -- @translators This is a duration
-                                    text = T(_("Bed time duration is %1."),
-                                             datetime.secondsToClockDuration(user_duration_format, seconds, true)),
+                                    text = T(
+                                        _("Bed time duration is %1."),
+                                        datetime.secondsToClockDuration(user_duration_format, seconds, true)
+                                    ),
                                     timeout = 5,
                                 })
-                                if touchmenu_instance then touchmenu_instance:updateItems() end
+                                if touchmenu_instance then
+                                    touchmenu_instance:updateItems()
+                                end
                                 if previous_bed_time_duration_seconds ~= self.bed_time_duration_seconds then
                                     if self:isBedTime(os.time()) then
                                         if self:hasBedTimeBreakStarted() then
                                             -- Reschedule the end of bed time.
                                             UIManager:unschedule(self.bed_time_end_callback)
                                             local bed_time_seconds_remaining = self:bedTimeSecondsRemaining(os.time())
-                                            logger.dbg(string.format("BreakTimer: Rescheduling the end of bed time in %d seconds", bed_time_seconds_remaining))
+                                            logger.dbg(
+                                                string.format(
+                                                    "BreakTimer: Rescheduling the end of bed time in %d seconds",
+                                                    bed_time_seconds_remaining
+                                                )
+                                            )
                                             UIManager:scheduleIn(bed_time_seconds_remaining, self.bed_time_end_callback)
                                             if self:enabled() then
-                                                local seconds_until_bed_time_ends = self:bedTimeSecondsRemaining(os.time())
+                                                local seconds_until_bed_time_ends =
+                                                    self:bedTimeSecondsRemaining(os.time())
                                                 -- Schedule breaks to resume after bed time ends.
-                                                logger.dbg(string.format("BreakTimer: Scheduling next break to begin after bed time ends in %d seconds", seconds_until_bed_time_ends + self.break_interval))
-                                                self:resetBreakAndRescheduleIn(seconds_until_bed_time_ends + self.break_interval)
+                                                logger.dbg(
+                                                    string.format(
+                                                        "BreakTimer: Scheduling next break to begin after bed time ends in %d seconds",
+                                                        seconds_until_bed_time_ends + self.break_interval
+                                                    )
+                                                )
+                                                self:resetBreakAndRescheduleIn(
+                                                    seconds_until_bed_time_ends + self.break_interval
+                                                )
                                             end
                                         else
                                             self:startBedTime()
@@ -1010,8 +1110,6 @@ function BreakTimer:addToMainMenu(menu_items)
                                     elseif not self:isBedTime(os.time()) and self:hasBedTimeBreakStarted() then
                                         self:endBedTime()
                                     end
-                                else
-                                    -- Reschedule the break end time?
                                 end
                             else
                                 UIManager:unschedule(self.bed_time_start_callback)
@@ -1021,7 +1119,7 @@ function BreakTimer:addToMainMenu(menu_items)
                                     self.bed_time_dialog = nil
                                 end
                             end
-                        end
+                        end,
                     }
                     UIManager:show(time_widget)
                 end,
@@ -1084,14 +1182,20 @@ function BreakTimer:onResume()
                 local remainder_seconds = self:bedTimeSecondsRemaining(os_time)
                 if remainder_seconds == math.huge then
                     -- Should not be possible.
-                    logger.dbg("BreakTimer: bedTimeSecondsRemaining returned math.huge when bed time is enabled and it is currently bed time!")
+                    logger.dbg(
+                        "BreakTimer: bedTimeSecondsRemaining returned math.huge when bed time is enabled and it is currently bed time!"
+                    )
                 else
-                    logger.dbg(string.format("BreakTimer: Rescheduling end of bed time in %d seconds", remainder_seconds))
+                    logger.dbg(
+                        string.format("BreakTimer: Rescheduling end of bed time in %d seconds", remainder_seconds)
+                    )
                     UIManager:scheduleIn(remainder_seconds, self.bed_time_end_callback)
                 end
             else
                 -- Initiate bed time.
-                logger.dbg("BreakTimer: It is bed time but the bed time break has not yet started. Starting bed time break")
+                logger.dbg(
+                    "BreakTimer: It is bed time but the bed time break has not yet started. Starting bed time break"
+                )
                 -- UIManager:unschedule(self.bed_time_start_callback)
                 self:startBedTime()
             end
@@ -1109,9 +1213,13 @@ function BreakTimer:onResume()
                 local remainder_seconds = self:secondsUntilBedTime(os_time)
                 if remainder_seconds == math.huge then
                     -- Should not be possible.
-                    logger.dbg("BreakTimer: secondsUntilBedTime returned math.huge when bed time is enabled and it is not currently bed time!")
+                    logger.dbg(
+                        "BreakTimer: secondsUntilBedTime returned math.huge when bed time is enabled and it is not currently bed time!"
+                    )
                 else
-                    logger.dbg(string.format("BreakTimer: Rescheduling start of bed time in %d seconds", remainder_seconds))
+                    logger.dbg(
+                        string.format("BreakTimer: Rescheduling start of bed time in %d seconds", remainder_seconds)
+                    )
                     UIManager:scheduleIn(remainder_seconds, self.bed_time_start_callback)
                 end
             end
@@ -1125,7 +1233,13 @@ function BreakTimer:onResume()
         -- local ui_time = time.to_s(UIManager:getTime())
         -- logger.dbg(string.format("BreakTimer: UIManager time is %d seconds", ui_time))
         if time_idle_s >= self.break_length then
-            logger.dbg(string.format("BreakTimer: Idle time (%d seconds) was greater than or equal to the break length (%d seconds), resetting break", time_idle_s, self.break_length))
+            logger.dbg(
+                string.format(
+                    "BreakTimer: Idle time (%d seconds) was greater than or equal to the break length (%d seconds), resetting break",
+                    time_idle_s,
+                    self.break_length
+                )
+            )
             self:resetBreak()
         else
             -- The remaining time automatically takes into account any idle time using the self.idle_start variable.
@@ -1139,7 +1253,12 @@ function BreakTimer:onResume()
                     self:resetBreak()
                 else
                     -- The break should have started by now.
-                    logger.dbg(string.format("BreakTimer: The break should have started already. Starting reduced break shortened by %d seconds", time_idle_s))
+                    logger.dbg(
+                        string.format(
+                            "BreakTimer: The break should have started already. Starting reduced break shortened by %d seconds",
+                            time_idle_s
+                        )
+                    )
                     -- Reduce the length of the break by the amount of time the system was idle, i.e. suspended.
                     self:startBreakWithReducedLength(time_idle_s)
                 end
@@ -1159,7 +1278,9 @@ function BreakTimer:onResume()
                     -- In effect, this doesn't count the time idle towards the next break.
                     -- Only time that is spent reading should count towards the next break.
                     self:rescheduleIn(remainder + time_idle_s)
-                    logger.dbg(string.format("BreakTimer: %d seconds remaining before the next break", remainder + time_idle_s))
+                    logger.dbg(
+                        string.format("BreakTimer: %d seconds remaining before the next break", remainder + time_idle_s)
+                    )
                 end
             end
         end
