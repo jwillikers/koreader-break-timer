@@ -61,6 +61,31 @@ cp --recursive breaktimer.koplugin/* /run/media/$(id --name --user)/KOBOeReader/
 Any changes to the plugin seem to require a reboot to take effect.
 ====
 
+== Testing
+
+The unit tests run the plugin against lightweight stand-ins for the KOReader modules it uses, with a simulated clock.
+They only require Lua 5.1 or newer, or LuaJIT.
+Run them from the root of the repository.
+
+[,sh]
+----
+lua test/test_breaktimer.lua
+----
+
+KOReader uses LuaJIT, so running the tests with it is the closest match to the device.
+
+[,sh]
+----
+luajit test/test_breaktimer.lua
+----
+
+To run only the tests whose names contain a given string, pass it as an argument.
+
+[,sh]
+----
+lua test/test_breaktimer.lua "bed time"
+----
+
 == Contributing
 
 Contributions in the form of issues, feedback, and even pull requests are welcome.

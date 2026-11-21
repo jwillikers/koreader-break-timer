@@ -1,0 +1,33 @@
+name: Test
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (${{ matrix.lua }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # KOReader uses LuaJIT.
+          - lua: luajit
+            package: luajit
+          - lua: lua5.4
+            package: lua5.4
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install ${{ matrix.lua }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ${{ matrix.package }}
+      - name: Run the tests
+        run: ${{ matrix.lua }} test/test_breaktimer.lua
